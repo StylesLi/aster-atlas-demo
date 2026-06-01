@@ -1,40 +1,34 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import StarCard from "./components/StarCard";
 import CertificatePreview from "./components/CertificatePreview";
 
-const stars = [
-  {
-    id: 1,
-    name: "Aster-001",
-    constellation: "Orion",
-    price: 29,
-    distance: "642 light years",
-    description:
-      "A bright star region associated with one of the most recognisable constellations.",
-  },
-  {
-    id: 2,
-    name: "Aster-002",
-    constellation: "Lyra",
-    price: 49,
-    distance: "25 light years",
-    description:
-      "A beautiful star from a constellation often linked with music and mythology.",
-  },
-  {
-    id: 3,
-    name: "Aster-003",
-    constellation: "Cassiopeia",
-    price: 79,
-    distance: "550 light years",
-    description:
-      "A star from the northern sky, connected with the famous W-shaped constellation.",
-  },
-];
-
 function App() {
+  const [stars, setStars] = useState([]);
   const [selectedStar, setSelectedStar] = useState(null);
   const [purchasedStar, setPurchasedStar] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadStars() {
+      try {
+        const response = await fetch("http://localhost:3000/api/stars");
+
+        if (!response.ok) {
+          throw new Error("Failed to load stars");
+        }
+
+        const data = await response.json();
+        setStars(data);
+      } catch (err) {
+        setError("Could not load stars from backend.");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadStars();
+  }, []);
 
   return (
     <main>
@@ -42,6 +36,9 @@ function App() {
       <p>Explore real stars and create a personal star certificate.</p>
 
       <h2>Available Stars</h2>
+
+      {isLoading && <p>Loading stars...</p>}
+      {error && <p>{error}</p>}
 
       {stars.map((star) => (
         <StarCard key={star.id} star={star} onView={setSelectedStar} />
