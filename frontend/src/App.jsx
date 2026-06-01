@@ -5,9 +5,10 @@ import CertificatePreview from "./components/CertificatePreview";
 function App() {
   const [stars, setStars] = useState([]);
   const [selectedStar, setSelectedStar] = useState(null);
-  const [purchasedStar, setPurchasedStar] = useState(null);
+  const [purchaseResult, setPurchaseResult] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
+  const [purchaseMessage, setPurchaseMessage] = useState("");
 
   useEffect(() => {
     async function loadStars() {
@@ -30,6 +31,33 @@ function App() {
     loadStars();
   }, []);
 
+  async function handlePurchase(star) {
+    setPurchaseMessage("Saving purchase...");
+
+    try {
+      const response = await fetch("http://localhost:3000/api/purchase", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          starId: star.id,
+          ownerName: "Demo User",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Purchase failed");
+      }
+
+      const data = await response.json();
+      setPurchaseResult(data);
+      setPurchaseMessage("Purchase saved.");
+    } catch (err) {
+      setPurchaseMessage("Could not save purchase.");
+    }
+  }
+
   return (
     <main>
       <h1>Aster Atlas</h1>
@@ -51,13 +79,15 @@ function App() {
           <p>Constellation: {selectedStar.constellation}</p>
           <p>Distance: {selectedStar.distance}</p>
           <p>{selectedStar.description}</p>
-          <button onClick={() => setPurchasedStar(selectedStar)}>
+          <button onClick={() => handlePurchase(selectedStar)}>
             Buy This Star
           </button>
         </section>
       )}
 
-      {purchasedStar && <CertificatePreview star={purchasedStar} />}
+      {purchaseMessage && <p>{purchaseMessage}</p>}
+
+      {purchaseResult && <CertificatePreview purchase={purchaseResult} />}
     </main>
   );
 }

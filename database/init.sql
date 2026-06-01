@@ -1,3 +1,4 @@
+DROP TABLE IF EXISTS ownerships;
 DROP TABLE IF EXISTS stars;
 
 CREATE TABLE stars (
@@ -7,6 +8,14 @@ CREATE TABLE stars (
   price INTEGER NOT NULL,
   distance TEXT,
   description TEXT
+);
+
+CREATE TABLE ownerships (
+  id SERIAL PRIMARY KEY,
+  star_id INTEGER NOT NULL REFERENCES stars(id),
+  owner_name TEXT NOT NULL,
+  certificate_id TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO stars (name, constellation, price, distance, description)
