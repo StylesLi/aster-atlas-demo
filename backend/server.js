@@ -3,11 +3,15 @@ const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const { Pool } = require("pg");
+const OpenAI = require("openai");
 
 dotenv.config({ path: path.join(__dirname, "../.env") });
 
 const app = express();
 const PORT = 3000;
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 app.use(cors());
 app.use(express.json());
@@ -63,6 +67,44 @@ app.post("/api/purchase", async (req, res) => {
   } catch (error) {
     console.error("Purchase error:", error);
     res.status(500).json({ message: "Could not save purchase" });
+  }
+});
+
+app.post("/api/generate-certificate-message", async (req, res) => {
+  const { ownerName, starName, constellation, distance } = req.body;
+
+  if (!ownerName || !starName || !constellation) {
+    return res.status(400).json({
+      message: "ownerName, starName, and constellation are required",
+    });
+  }
+
+  try {
+    const response = await openai.responses.create({
+      model: "gpt-4.1-mini",
+      input: `Write a short, warm, premium certificate message for Aster Atlas.
+
+Owner name: ${ownerName}
+Star name: ${starName}
+Constellation: ${constellation}
+Distance: ${distance || "unknown"}
+
+Rules:
+- 1 sentence only
+- poetic but not cheesy
+- no claim of official NASA ownership
+- mention the star and constellation
+- under 35 words`,
+    });
+
+    res.json({
+      message: response.output_text,
+    });
+  } catch (error) {
+    console.error("OpenAI error:", error);
+    res.status(500).json({
+      message: "Could not generate certificate message",
+    });
   }
 });
 
