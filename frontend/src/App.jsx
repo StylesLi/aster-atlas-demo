@@ -9,6 +9,8 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [purchaseMessage, setPurchaseMessage] = useState("");
+  const [aiMessage, setAiMessage] = useState("");
+  const [isGeneratingAiMessage, setIsGeneratingAiMessage] = useState(false);
 
   useEffect(() => {
     async function loadStars() {
@@ -33,9 +35,11 @@ function App() {
 
   async function handlePurchase(star) {
     setPurchaseMessage("Saving purchase...");
+    setAiMessage("");
+    setIsGeneratingAiMessage(false);
 
     try {
-      const response = await fetch("http://localhost:3000/api/purchase", {
+      const purchaseResponse = await fetch("http://localhost:3000/api/purchase", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -46,13 +50,46 @@ function App() {
         }),
       });
 
-      if (!response.ok) {
+      if (!purchaseResponse.ok) {
         throw new Error("Purchase failed");
       }
 
-      const data = await response.json();
-      setPurchaseResult(data);
+      const purchaseData = await purchaseResponse.json();
+      setPurchaseResult(purchaseData);
       setPurchaseMessage("Purchase saved.");
+
+      setIsGeneratingAiMessage(true);
+
+      try {
+        const aiResponse = await fetch(
+          "http://localhost:3000/api/generate-certificate-message",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ownerName: purchaseData.ownership.owner_name,
+              starName: purchaseData.star.name,
+              constellation: purchaseData.star.constellation,
+              distance: purchaseData.star.distance,
+            }),
+          }
+        );
+
+        if (!aiResponse.ok) {
+          throw new Error("AI message failed");
+        }
+
+        const aiData = await aiResponse.json();
+        setAiMessage(aiData.message);
+      } catch (err) {
+        setAiMessage(
+          `${purchaseData.star.name} in ${purchaseData.star.constellation} is dedicated to ${purchaseData.ownership.owner_name} as a personal mark of wonder and memory.`
+        );
+      } finally {
+        setIsGeneratingAiMessage(false);
+      }
     } catch (err) {
       setPurchaseMessage("Could not save purchase.");
     }
@@ -87,7 +124,13 @@ function App() {
 
       {purchaseMessage && <p>{purchaseMessage}</p>}
 
-      {purchaseResult && <CertificatePreview purchase={purchaseResult} />}
+      {purchaseResult && (
+        <CertificatePreview
+          purchase={purchaseResult}
+          aiMessage={aiMessage}
+          isGeneratingAiMessage={isGeneratingAiMessage}
+        />
+      )}
     </main>
   );
 }

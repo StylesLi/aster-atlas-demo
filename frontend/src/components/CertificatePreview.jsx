@@ -1,4 +1,4 @@
-function CertificatePreview({ purchase }) {
+function CertificatePreview({ purchase, aiMessage, isGeneratingAiMessage }) {
   const { star, ownership } = purchase;
 
   return (
@@ -15,6 +15,12 @@ function CertificatePreview({ purchase }) {
       <p>Constellation: {star.constellation}</p>
       <p>Distance: {star.distance}</p>
       <p>Certificate ID: {ownership.certificate_id}</p>
+
+      <h3>AI Certificate Message</h3>
+
+      {isGeneratingAiMessage && <p>Generating AI message...</p>}
+
+      {!isGeneratingAiMessage && aiMessage && <p>{aiMessage}</p>}
     </section>
   );
 }
